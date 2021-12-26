@@ -9,5 +9,5 @@ class User(AbstractUser):
     email = models.EmailField(unique=True, blank=False)
     first_name = models.CharField(max_length=64)
     last_name = models.CharField(max_length=64)
-    birthday = models.DateField(blank=True)
+    birthday = models.DateField(blank=True, null=True)
     
