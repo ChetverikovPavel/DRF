@@ -1,7 +1,10 @@
-from pyexpat import model
 from re import T
+
 from django.db import models
+from pyexpat import model
+
 from usersapp.models import User
+
 
 class Project(models.Model):
     name = models.CharField(max_length=32, unique=True)
@@ -10,6 +13,7 @@ class Project(models.Model):
 
     def __str__(self):
         return self.name
+
 
 class ToDo(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
