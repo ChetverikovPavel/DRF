@@ -1,12 +1,8 @@
-import json
 from django.test import TestCase
 from rest_framework import status
-from rest_framework.test import APIRequestFactory, APITestCase
-from mixer.backend.django import mixer
-from django.contrib.auth.models import User
-from usersapp.models import User as MyUser
-from .views import ToDoViewSet, ProjectViewSet
-from .models import ToDo, Project
+from rest_framework.test import APIRequestFactory
+from .views import ToDoViewSet
+
 
 # Create your tests here.
 
