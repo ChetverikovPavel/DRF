@@ -4,6 +4,8 @@ import UserList from './components/Users.js'
 import ProjectList from './components/Projects';
 import ToDoList from './components/ToDos';
 import LoginForm from './components/Auth';
+import ToDoForm from './components/TodoForm';
+import ProjectForm from './components/ProjectForm';
 import axios from 'axios'
 import {BrowserRouter, Link, Route, Routes} from "react-router-dom"
 import Cookies from 'universal-cookie'
@@ -16,14 +18,17 @@ class App extends React.Component {
       'users': [],
       'projects': [],
       'todos': [],
-      'token': ''
+      'token': '',
+      'uuid': ''
     }
   }
 
   set_token(token) {
     const cookies = new Cookies()
     cookies.set('token', token)
+    
     this.setState({'token': token}, ()=>this.load_data())
+    
   }
 
   is_authenticated() {
@@ -32,6 +37,7 @@ class App extends React.Component {
 
   logout() {
     this.set_token('')
+    this.setState({'uuid': ''})
   }
 
   get_token_from_storage() {
@@ -44,12 +50,13 @@ class App extends React.Component {
     axios.post('http://127.0.0.1:8000/api-token-auth/', {username: username, password: password})
     .then(response => {
       this.set_token(response.data['token'])
+      this.setState({'uuid': this.state.users.filter((item) => item.username === username)[0].uuid})
     }).catch(error => alert('Неверный логин или пароль'))
   }
 
   get_headers() {
     let headers = {
-      'Content-Type': 'applications/json'
+      'Content-Type': 'application/json'
     }
     if (this.is_authenticated())
     {
@@ -91,6 +98,42 @@ class App extends React.Component {
     }).catch(error => console.log(error))
   }
 
+  createToDo(textVal, project){
+    const headers = this.get_headers()
+    const data = {text: textVal, project: project, creator: this.state.uuid}
+    axios.post(`http://127.0.0.1:8000/api/todos/`, data, {headers})
+    .then(response => {
+      let new_todo = response.data
+      this.setState({todos: [...this.state.todos, new_todo]})
+    }).catch(error => console.log(error)) 
+  }
+
+  createProject(name){
+    const headers = this.get_headers()
+    const data = {name: name, users: [this.state.uuid,]}
+    axios.post(`http://127.0.0.1:8000/api/projects/`, data, {headers})
+    .then(response => {
+      let new_project = response.data
+      this.setState({projects: [...this.state.projects, new_project]})
+    }).catch(error => console.log(error))
+  }
+
+  deleteToDo(id){
+    const headers = this.get_headers()
+    axios.delete(`http://127.0.0.1:8000/api/todos/${id}`, {headers})
+    .then(response => {
+      this.setState({todos: this.state.todos.filter((item) => item.id !== id)})
+    }).catch(error => console.log(error))
+  }
+
+  deleteProject(id){
+    const headers = this.get_headers()
+    axios.delete(`http://127.0.0.1:8000/api/projects/${id}`, {headers})
+    .then(response => {
+      this.setState({projects: this.state.projects.filter((item) => item.id !== id)})
+    }).catch(error => console.log(error))
+  }
+
   componentDidMount() {
     this.get_token_from_storage()
   }
@@ -117,9 +160,11 @@ class App extends React.Component {
           </nav>
           <Routes>
             <Route path='/' element={<UserList users={this.state.users} />}/>
-            <Route path='/projects' element={<ProjectList projects={this.state.projects} />}/>
-            <Route path='/todos' element={<ToDoList todos={this.state.todos} />}/>
-            <Route path='/login' element={<LoginForm get_token={(username, password) => this.get_token(username, password)} />} />           
+            <Route path='/projects' element={<ProjectList projects={this.state.projects} deleteProject={(id) => this.deleteProject(id)} />}/>
+            <Route path='/todos' element={<ToDoList todos={this.state.todos} deleteToDo={(id) => this.deleteToDo(id)} />}/>
+            <Route path='/login' element={<LoginForm get_token={(username, password) => this.get_token(username, password)} />} />
+            <Route path='/todos/create' element={<ToDoForm projects={this.state.projects} createToDo={(textVal, project) => this.createToDo(textVal, project)}/>}/>
+            <Route path='/projects/create' element={<ProjectForm createProject={(name) => this.createProject(name)} />}/>            
           </Routes>
         </BrowserRouter>
       </div>
